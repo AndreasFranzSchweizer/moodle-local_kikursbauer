@@ -67,7 +67,8 @@ class move_module extends external_api {
         helper::require_course_access($course, $context, ['moodle/course:manageactivities']);
 
         helper::ensure_section($course, $params['section']);
-        $modinfo = get_fast_modinfo($course->id, 0, true);
+        get_fast_modinfo($course->id, 0, true);
+        $modinfo = get_fast_modinfo($course->id);
         $sectioninfo = $modinfo->get_section_info($params['section'], MUST_EXIST);
         $cm = $modinfo->get_cm($cm->id);
 

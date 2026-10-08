@@ -205,7 +205,9 @@ class helper {
      */
     public static function update_section(\stdClass $course, \stdClass $section, array $data): void {
         // Moodle 4.4+ expects a section_info object here, not the plain course_sections record.
-        $sectioninfo = get_fast_modinfo($course->id, 0, true)->get_section_info_by_id($section->id, MUST_EXIST);
+        // get_fast_modinfo(..., true) only clears the static cache and returns null, so load modinfo afterwards.
+        get_fast_modinfo($course->id, 0, true);
+        $sectioninfo = get_fast_modinfo($course->id)->get_section_info_by_id($section->id, MUST_EXIST);
         \core_courseformat\formatactions::section($course)->update($sectioninfo, $data);
     }
 
