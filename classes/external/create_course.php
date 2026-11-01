@@ -46,6 +46,8 @@ class create_course extends external_api {
             'numsections' => new external_value(PARAM_INT, 'Number of sections to create', VALUE_DEFAULT, 0),
             'summary' => new external_value(PARAM_RAW, 'Course summary as HTML', VALUE_DEFAULT, ''),
             'visible' => new external_value(PARAM_BOOL, 'Visible to students (default: hidden)', VALUE_DEFAULT, false),
+            'enablecompletion' => new external_value(PARAM_BOOL,
+                'Enable activity completion tracking (default: the site default for new courses)', VALUE_DEFAULT, null),
         ]);
     }
 
@@ -59,10 +61,11 @@ class create_course extends external_api {
      * @param int $numsections
      * @param string $summary
      * @param bool $visible
+     * @param bool|null $enablecompletion null = site default
      * @return array
      */
     public static function execute(int $categoryid, string $fullname, string $shortname, string $format = 'topics',
-            int $numsections = 0, string $summary = '', bool $visible = false): array {
+            int $numsections = 0, string $summary = '', bool $visible = false, ?bool $enablecompletion = null): array {
         global $CFG, $USER;
         require_once($CFG->dirroot . '/course/lib.php');
         require_once($CFG->libdir . '/enrollib.php');
@@ -75,7 +78,11 @@ class create_course extends external_api {
             'numsections' => $numsections,
             'summary' => $summary,
             'visible' => $visible,
+            'enablecompletion' => $enablecompletion,
         ]);
+        // create_course() does not apply the site default like the course form does, so take it from the settings.
+        $enablecompletion = $params['enablecompletion']
+            ?? (!empty($CFG->enablecompletion) && get_config('moodlecourse', 'enablecompletion'));
 
         $categorycontext = \context_coursecat::instance($params['categoryid']);
         self::validate_context($categorycontext);
@@ -95,6 +102,7 @@ class create_course extends external_api {
             'summary' => $params['summary'],
             'summaryformat' => FORMAT_HTML,
             'visible' => (int) $params['visible'],
+            'enablecompletion' => (int) $enablecompletion,
             'startdate' => usergetmidnight(time()),
         ]);
 

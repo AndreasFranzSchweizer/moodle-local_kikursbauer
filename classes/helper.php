@@ -84,6 +84,133 @@ class helper {
             'timeclose'],
     ];
 
+    /** @var string[] Activity completion settings that update_module may change for every module type. */
+    const COMPLETION_COMMON = ['completion', 'completionview', 'completionexpected'];
+
+    /** @var array Additional activity completion settings that update_module may change, per module type. */
+    const COMPLETION_RULES = [
+        'assign' => ['completionsubmit', 'completionusegrade', 'completionpassgrade', 'gradepass'],
+        'quiz' => ['completionusegrade', 'completionpassgrade', 'gradepass', 'completionminattempts'],
+        'h5pactivity' => ['completionusegrade', 'completionpassgrade', 'gradepass'],
+        'feedback' => ['completionsubmit'],
+        'forum' => ['completiondiscussions', 'completionreplies', 'completionposts'],
+        'glossary' => ['completionentries'],
+    ];
+
+    /**
+     * Returns all activity completion settings that update_module accepts for the module type.
+     *
+     * @param string $modname
+     * @return string[]
+     */
+    public static function completion_keys(string $modname): array {
+        return array_merge(self::COMPLETION_COMMON, self::COMPLETION_RULES[$modname] ?? []);
+    }
+
+    /**
+     * Changes the activity completion of one activity the same way as the bulk edit of Moodle does
+     * (core_completion\manager::apply_completion), so the completion state of all participants is recalculated.
+     *
+     * Keys that are not given keep their current value. "completion": 0 none, 1 manual, 2 automatic (with conditions).
+     * Without automatic completion all conditions are switched off. "completionpassgrade" needs a passing grade:
+     * either "gradepass" in the same call or one that is already set in the gradebook.
+     *
+     * @param \stdClass $course
+     * @param \cm_info $cm
+     * @param array $values completion settings from completion_keys()
+     * @return string[] names of the changed settings
+     */
+    public static function apply_completion(\stdClass $course, \cm_info $cm, array $values): array {
+        global $CFG, $DB;
+        require_once($CFG->libdir . '/completionlib.php');
+        require_once($CFG->libdir . '/gradelib.php');
+
+        if (empty($course->enablecompletion)) {
+            throw new \moodle_exception('completionnotenabled', 'local_kikursbauer');
+        }
+        if (!\core_completion\manager::can_edit_bulk_completion($course->id, $cm)) {
+            throw new \moodle_exception('completionnotsupported', 'local_kikursbauer', '', $cm->modname);
+        }
+        // Yes/no conditions take 0 or 1, counts and dates any number from 0, "completion" is checked below.
+        $flags = ['completionview', 'completionusegrade', 'completionpassgrade', 'completionsubmit'];
+        foreach ($values as $key => $value) {
+            if (!is_numeric($value) || $value < 0 || (in_array($key, $flags, true) && !in_array((int) $value, [0, 1], true))) {
+                throw new \moodle_exception('invalidsettingvalue', 'local_kikursbauer', '', $key);
+            }
+        }
+
+        // Current values: completion fields of the course module plus the rule columns of the module table.
+        $instance = $DB->get_record($cm->modname, ['id' => $cm->instance], '*', MUST_EXIST);
+        $rulecolumns = array_values(array_filter(self::COMPLETION_RULES[$cm->modname] ?? [],
+            fn($key) => property_exists($instance, $key)));
+        $new = [
+            'completion' => (int) $cm->completion,
+            'completionview' => (int) $cm->completionview,
+            'completionexpected' => (int) $cm->completionexpected,
+            'completionusegrade' => $cm->completiongradeitemnumber === null ? 0 : 1,
+            'completionpassgrade' => (int) $cm->completionpassgrade,
+        ];
+        foreach ($rulecolumns as $key) {
+            $new[$key] = (int) $instance->$key;
+        }
+        foreach ($values as $key => $value) {
+            if ($key !== 'gradepass') {
+                $new[$key] = (int) $value;
+            }
+        }
+
+        if (!in_array($new['completion'], [COMPLETION_TRACKING_NONE, COMPLETION_TRACKING_MANUAL,
+                COMPLETION_TRACKING_AUTOMATIC], true)) {
+            throw new \moodle_exception('invalidsettingvalue', 'local_kikursbauer', '', 'completion');
+        }
+        if ($new['completion'] !== COMPLETION_TRACKING_AUTOMATIC) {
+            // Conditions only apply to automatic completion, the activity form clears them as well.
+            foreach (array_merge(['completionview', 'completionusegrade', 'completionpassgrade'], $rulecolumns) as $key) {
+                $new[$key] = 0;
+            }
+        } else {
+            if ($new['completionpassgrade']) {
+                $new['completionusegrade'] = 1;
+            }
+            $hasrule = $new['completionview'] || $new['completionusegrade'];
+            foreach ($rulecolumns as $key) {
+                $hasrule = $hasrule || $new[$key];
+            }
+            if (!$hasrule) {
+                throw new \moodle_exception('completionnorule', 'local_kikursbauer');
+            }
+        }
+        if (property_exists($instance, 'completionattemptsexhausted') && !$new['completionpassgrade']) {
+            $new['completionattemptsexhausted'] = 0;
+        }
+
+        // Grade conditions need the grade item of the activity; the passing grade is stored there.
+        if ($new['completionusegrade'] || array_key_exists('gradepass', $values)) {
+            $gradeitem = \grade_item::fetch(['itemtype' => 'mod', 'itemmodule' => $cm->modname,
+                'iteminstance' => $cm->instance, 'itemnumber' => 0, 'courseid' => $course->id]);
+            if (!$gradeitem) {
+                throw new \moodle_exception('completionnograde', 'local_kikursbauer');
+            }
+            if (array_key_exists('gradepass', $values)) {
+                $gradepass = (float) $values['gradepass'];
+                if ($gradepass < 0 || $gradepass > (float) $gradeitem->grademax) {
+                    throw new \moodle_exception('invalidgradepass', 'local_kikursbauer', '', format_float($gradeitem->grademax));
+                }
+                $gradeitem->gradepass = $gradepass;
+                $gradeitem->update('local_kikursbauer');
+            }
+            if ($new['completionpassgrade'] && (float) $gradeitem->gradepass <= 0) {
+                throw new \moodle_exception('completionnogradepass', 'local_kikursbauer');
+            }
+        }
+
+        $data = (object) $new;
+        $data->cmid = [$cm->id];
+        (new \core_completion\manager($course->id))->apply_completion($data, true);
+
+        return array_keys($values);
+    }
+
     /**
      * Checks that the current user may work in the course: validates the context, requires the capabilities and,
      * unless switched off, requires that the course lies in a category in which the user may create courses

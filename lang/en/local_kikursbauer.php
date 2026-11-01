@@ -24,14 +24,21 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['beforecmnotinsection'] = 'The course module {$a} (beforecmid) is not in the target section.';
+$string['completionnograde'] = 'This activity has no grade, so grade conditions (completionusegrade, completionpassgrade, gradepass) cannot be used.';
+$string['completionnogradepass'] = 'Completion with a passing grade needs a passing grade: set "gradepass" in the same call.';
+$string['completionnorule'] = 'Automatic completion (completion 2) needs at least one condition, e.g. completionview, completionusegrade or completionsubmit.';
+$string['completionnotenabled'] = 'Completion tracking is switched off in this course (course settings › Completion tracking).';
+$string['completionnotsupported'] = 'Activity completion cannot be set for module type "{$a}".';
 $string['feedbackanswered'] = 'The feedback has already been answered, its questions can no longer be replaced.';
 $string['importerror'] = 'Question import failed: {$a}';
 $string['invalidfile'] = 'Invalid file name or file content (base64 expected).';
 $string['invalidformat'] = 'The course format "{$a}" is not installed or not enabled.';
+$string['invalidgradepass'] = 'The passing grade must be between 0 and the maximum grade {$a}.';
 $string['invalidmodname'] = 'Module type "{$a}" cannot be created with this service.';
 $string['invalidsection'] = 'Invalid section number: {$a}';
 $string['invalidsettingkey'] = 'The setting "{$a}" is not allowed for this module type.';
 $string['invalidsettings'] = 'The settings parameter must be a JSON object.';
+$string['invalidsettingvalue'] = 'Invalid value for "{$a}". completion: 0, 1 or 2; yes/no conditions: 0 or 1; counts and dates: 0 or more.';
 $string['kikursbauer:use'] = 'Use the web service KI-Kursbauer';
 $string['missingsetting'] = 'Missing required setting: {$a}';
 $string['notowncategory'] = 'The course "{$a}" is not in a course category in which you may create courses. The KI-Kursbauer only works in your own course area.';

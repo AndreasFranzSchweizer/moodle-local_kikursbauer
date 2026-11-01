@@ -24,6 +24,8 @@ Erlaubt:
 - in eigenen Kursen Abschnitte, Seiten, Textfelder, Links, Bücher, Aufgaben,
   Foren, Tests (GIFT-Import), Glossare, Dateien, Ordner, H5P-Inhalte,
   Feedbacks und Bilder anlegen und ändern
+- den Aktivitätsabschluss von Aktivitäten setzen (wie die Massenbearbeitung
+  von Moodle; der Abschlussstand aller Teilnehmenden wird neu berechnet)
 - Kursinhalte lesen, auf die die Lehrkraft Zugriff hat
 
 Gesperrt:

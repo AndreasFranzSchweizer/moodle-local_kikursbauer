@@ -24,14 +24,21 @@
 defined('MOODLE_INTERNAL') || die();
 
 $string['beforecmnotinsection'] = 'Die Aktivität {$a} (beforecmid) liegt nicht im Zielabschnitt.';
+$string['completionnograde'] = 'Diese Aktivität hat keine Bewertung, Bedingungen mit Bewertung (completionusegrade, completionpassgrade, gradepass) gehen hier nicht.';
+$string['completionnogradepass'] = 'Abschluss mit „Bestanden“ braucht eine Bestehensgrenze: „gradepass“ im selben Aufruf setzen.';
+$string['completionnorule'] = 'Automatischer Abschluss (completion 2) braucht mindestens eine Bedingung, z. B. completionview, completionusegrade oder completionsubmit.';
+$string['completionnotenabled'] = 'In diesem Kurs ist der Aktivitätsabschluss ausgeschaltet (Kurseinstellungen › Abschlussverfolgung).';
+$string['completionnotsupported'] = 'Für den Aktivitätstyp „{$a}“ lässt sich kein Aktivitätsabschluss setzen.';
 $string['feedbackanswered'] = 'Das Feedback wurde bereits beantwortet. Die Fragen lassen sich über den Dienst nicht mehr ersetzen.';
 $string['importerror'] = 'Fragenimport fehlgeschlagen: {$a}';
 $string['invalidfile'] = 'Ungültiger Dateiname oder Dateiinhalt (Base64 erwartet).';
 $string['invalidformat'] = 'Das Kursformat „{$a}“ ist nicht installiert oder nicht aktiviert.';
+$string['invalidgradepass'] = 'Die Bestehensgrenze muss zwischen 0 und der Höchstbewertung {$a} liegen.';
 $string['invalidmodname'] = 'Der Aktivitätstyp „{$a}“ kann über diesen Dienst nicht angelegt werden.';
 $string['invalidsection'] = 'Ungültige Abschnittsnummer: {$a}';
 $string['invalidsettingkey'] = 'Die Einstellung „{$a}“ ist für diesen Aktivitätstyp nicht erlaubt.';
 $string['invalidsettings'] = 'Der Parameter settings muss ein JSON-Objekt sein.';
+$string['invalidsettingvalue'] = 'Ungültiger Wert für „{$a}“. completion: 0, 1 oder 2; Ja/Nein-Bedingungen: 0 oder 1; Anzahlen und Datum: ab 0.';
 $string['kikursbauer:use'] = 'Webservice KI-Kursbauer nutzen';
 $string['missingsetting'] = 'Pflichteinstellung fehlt: {$a}';
 $string['notowncategory'] = 'Der Kurs „{$a}“ liegt nicht in einem Kursbereich, in dem Sie Kurse anlegen dürfen. Der KI-Kursbauer arbeitet nur im eigenen Kursbereich.';

@@ -37,7 +37,9 @@ $functions = [
         'classname' => \local_kikursbauer\external\create_course::class,
         'description' => 'Creates a new course in a course category in which the user may create courses (the teacher\'s '
             . 'own course area) and enrols the user as teacher. The course is HIDDEN by default. format: topics, weeks or '
-            . 'tiles (if installed). Returns courseid; then build the content with the other functions.',
+            . 'tiles (if installed). enablecompletion: switch activity completion tracking on or off (default: site '
+            . 'default); needed for completion settings in update_module. Returns courseid; then build the content with '
+            . 'the other functions.',
         'type' => 'write',
         'capabilities' => 'moodle/course:create',
     ],
@@ -102,7 +104,16 @@ $functions = [
             . 'quiz: timeopen, timeclose, timelimit, attempts (refused if students already attempted the quiz); '
             . 'glossary: displayformat, entbypage; resource/folder: files (replaces all files), display; '
             . 'h5pactivity: package (replaces the package); feedback: items (replaces all questions, refused once '
-            . 'somebody has answered), anonymous, page_after_submit, timeopen, timeclose.',
+            . 'somebody has answered), anonymous, page_after_submit, timeopen, timeclose. '
+            . 'Activity completion (needs completion tracking in the course; works in quizzes with attempts, too; '
+            . 'recalculates the completion state of all participants like the bulk edit does): all types: '
+            . 'completion (0 none, 1 manual, 2 automatic), completionview (1 = must view), completionexpected (timestamp); '
+            . 'assign: completionsubmit, completionusegrade, completionpassgrade, gradepass; '
+            . 'quiz: completionusegrade (1 = any graded attempt), completionpassgrade, gradepass (passing grade in points), '
+            . 'completionminattempts; h5pactivity: completionusegrade, completionpassgrade, gradepass; '
+            . 'feedback: completionsubmit; forum: completiondiscussions, completionreplies, completionposts; '
+            . 'glossary: completionentries. Conditions only count with completion 2; omitted keys keep their value. '
+            . 'Example: {"completion": 2, "completionsubmit": 1}.',
         'type' => 'write',
         'capabilities' => 'moodle/course:manageactivities',
     ],

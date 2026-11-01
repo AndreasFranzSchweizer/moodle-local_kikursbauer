@@ -73,7 +73,12 @@ class update_module extends external_api {
         $context = \context_module::instance($cm->id);
         helper::require_course_access($course, $context, ['moodle/course:manageactivities']);
 
-        $settings = helper::decode_settings((string) $params['settings'], helper::UPDATE_SETTINGS[$cm->modname] ?? []);
+        $completionkeys = helper::completion_keys($cm->modname);
+        $settings = helper::decode_settings((string) $params['settings'],
+            array_merge(helper::UPDATE_SETTINGS[$cm->modname] ?? [], $completionkeys));
+        // Activity completion is handled separately and is allowed in quizzes with attempts, too.
+        $completion = array_intersect_key($settings, array_flip($completionkeys));
+        $settings = array_diff_key($settings, $completion);
         if ($settings && $cm->modname === 'quiz') {
             helper::require_no_attempts((int) $cm->instance);
         }
@@ -135,6 +140,11 @@ class update_module extends external_api {
         if ($params['visible'] !== null) {
             set_coursemodule_visible($cm->id, (int) $params['visible']);
             $changed[] = 'visible';
+        }
+        if ($completion) {
+            get_fast_modinfo($course->id, 0, true);
+            $changed = array_merge($changed, helper::apply_completion($course, get_fast_modinfo($course->id)->get_cm($cm->id),
+                $completion));
         }
 
         rebuild_course_cache($course->id, true);
