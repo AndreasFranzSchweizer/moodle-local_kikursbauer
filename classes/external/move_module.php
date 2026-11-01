@@ -78,7 +78,9 @@ class move_module extends external_api {
             if ((int) $beforecm->sectionnum !== $params['section']) {
                 throw new \moodle_exception('beforecmnotinsection', 'local_kikursbauer', '', $params['beforecmid']);
             }
-            $before = (int) $beforecm->id;
+            // Pass the cm object: since Moodle 5.2 moveto_module() reads $beforemod->id, so an int ID fails there;
+            // Moodle 4.5-5.1 accept both (course_add_cm_to_section() converts objects to their ID).
+            $before = $beforecm;
         }
 
         moveto_module($cm, $sectioninfo, $before);
